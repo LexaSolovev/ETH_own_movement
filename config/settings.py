@@ -6,7 +6,7 @@ from typing import List, Optional
 
 class Settings(BaseSettings):
     """
-        Конфигурация приложения, часть констант переопределяются в файле .env
+    Конфигурация приложения, часть констант переопределяются в файле .env
     """
 
     # WebSocket Binance
@@ -37,9 +37,7 @@ class Settings(BaseSettings):
 
     # Заполнить
     model_config = ConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
     @property

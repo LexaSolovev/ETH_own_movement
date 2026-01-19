@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class AlertType(Enum):
     """Типы оповещений."""
+
     PRICE_CHANGE = "price_change"
     REGRESSION_READY = "regression_ready"
     ERROR = "error"
@@ -19,9 +20,9 @@ class AlertManager:
     """Менеджер оповещений."""
 
     def __init__(
-            self,
-            alert_callback: Optional[Callable[[str], None]] = None,
-            cooldown_minutes: int = None
+        self,
+        alert_callback: Optional[Callable[[str], None]] = None,
+        cooldown_minutes: int = None,
     ):
         """
         Инициализация менеджера оповещений.
@@ -39,7 +40,9 @@ class AlertManager:
         # Порог для оповещений
         self.alert_threshold = settings.ALERT_THRESHOLD * 100  # В процентах
 
-        logger.info(f"Initialized AlertManager with cooldown: {self.cooldown_minutes} minutes")
+        logger.info(
+            f"Initialized AlertManager with cooldown: {self.cooldown_minutes} minutes"
+        )
 
     def _default_alert_callback(self, message: str):
         """Стандартный callback для оповещений (вывод в консоль)."""
@@ -63,10 +66,7 @@ class AlertManager:
         self.last_alert_times[alert_type] = datetime.now()
 
     def send_price_change_alert(
-            self,
-            change_percent: float,
-            current_index: float,
-            is_positive: bool
+        self, change_percent: float, current_index: float, is_positive: bool
     ):
         """
         Отправить оповещение об изменении цены.
@@ -114,21 +114,14 @@ class AlertManager:
         if not self._can_send_alert(AlertType.ERROR):
             return
 
-        message = (
-            f"Ошибка в компоненте {component}:\n"
-            f"{error_message}"
-        )
+        message = f"Ошибка в компоненте {component}:\n" f"{error_message}"
 
         self.alert_callback(message)
         self._update_alert_time(AlertType.ERROR)
 
         logger.error(f"Error alert sent from {component}: {error_message}")
 
-    def check_price_change(
-            self,
-            change_percent: Optional[float],
-            current_index: float
-    ):
+    def check_price_change(self, change_percent: Optional[float], current_index: float):
         """
         Проверить изменение цены и отправить оповещение при необходимости.
 

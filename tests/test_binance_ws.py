@@ -45,23 +45,23 @@ def test_parse_kline_data():
     ws = BinanceWebSocket(on_klines_callback=callback)
 
     kline_data = {
-        'k': {
-            's': 'ETHUSDT',
-            't': 1640995200000,  # 2022-01-01 00:00:00
-            'o': '2500.0',
-            'h': '2510.0',
-            'l': '2490.0',
-            'c': '2505.0',
-            'v': '1000.0',
-            'x': True
+        "k": {
+            "s": "ETHUSDT",
+            "t": 1640995200000,  # 2022-01-01 00:00:00
+            "o": "2500.0",
+            "h": "2510.0",
+            "l": "2490.0",
+            "c": "2505.0",
+            "v": "1000.0",
+            "x": True,
         }
     }
 
     result = ws._parse_kline_data(kline_data)
-    assert result['symbol'] == 'ethusdt'
-    assert result['open'] == 2500.0
-    assert result['close'] == 2505.0
-    assert result['is_closed'] == True
+    assert result["symbol"] == "ethusdt"
+    assert result["open"] == 2500.0
+    assert result["close"] == 2505.0
+    assert result["is_closed"] == True
 
 
 @pytest.mark.asyncio
@@ -74,7 +74,9 @@ async def test_connect_and_disconnect():
     mock_websocket = AsyncMock()
 
     # Мокаем connect чтобы возвращал AsyncMock
-    with patch('src.stream.binance_ws.websockets.connect', new_callable=AsyncMock) as mock_connect:
+    with patch(
+        "src.stream.binance_ws.websockets.connect", new_callable=AsyncMock
+    ) as mock_connect:
         mock_connect.return_value = mock_websocket
         await ws.connect()
 
@@ -93,25 +95,27 @@ async def test_handle_message_kline():
     callback = MagicMock()
     ws = BinanceWebSocket(on_klines_callback=callback)
 
-    kline_message = json.dumps({
-        'k': {
-            's': 'ETHUSDT',
-            't': 1640995200000,
-            'o': '2500.0',
-            'h': '2510.0',
-            'l': '2490.0',
-            'c': '2505.0',
-            'v': '1000.0',
-            'x': True
+    kline_message = json.dumps(
+        {
+            "k": {
+                "s": "ETHUSDT",
+                "t": 1640995200000,
+                "o": "2500.0",
+                "h": "2510.0",
+                "l": "2490.0",
+                "c": "2505.0",
+                "v": "1000.0",
+                "x": True,
+            }
         }
-    })
+    )
 
     await ws._handle_message(kline_message)
 
     callback.assert_called_once()
     called_data = callback.call_args[0][0]
-    assert called_data['symbol'] == 'ethusdt'
-    assert called_data['close'] == 2505.0
+    assert called_data["symbol"] == "ethusdt"
+    assert called_data["close"] == 2505.0
 
 
 @pytest.mark.asyncio
@@ -131,11 +135,7 @@ async def test_handle_message_not_kline():
     callback = MagicMock()
     ws = BinanceWebSocket(on_klines_callback=callback)
 
-    other_message = json.dumps({
-        'e': '24hrTicker',
-        's': 'ETHUSDT',
-        'c': '2505.0'
-    })
+    other_message = json.dumps({"e": "24hrTicker", "s": "ETHUSDT", "c": "2505.0"})
 
     await ws._handle_message(other_message)
 
@@ -151,18 +151,20 @@ async def test_listen():
 
     mock_websocket = AsyncMock()
     mock_websocket.__aiter__.return_value = [
-        json.dumps({
-            'k': {
-                's': 'ETHUSDT',
-                't': 1640995200000,
-                'o': '2500.0',
-                'h': '2510.0',
-                'l': '2490.0',
-                'c': '2505.0',
-                'v': '1000.0',
-                'x': True
+        json.dumps(
+            {
+                "k": {
+                    "s": "ETHUSDT",
+                    "t": 1640995200000,
+                    "o": "2500.0",
+                    "h": "2510.0",
+                    "l": "2490.0",
+                    "c": "2505.0",
+                    "v": "1000.0",
+                    "x": True,
+                }
             }
-        })
+        )
     ]
     ws.websocket = mock_websocket
 

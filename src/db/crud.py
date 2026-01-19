@@ -16,14 +16,14 @@ class CRUDOperations:
 
     @staticmethod
     async def save_price_bar(
-            session: AsyncSession,
-            symbol: str,
-            timestamp: datetime,
-            open_price: float,
-            high: float,
-            low: float,
-            close: float,
-            volume: float
+        session: AsyncSession,
+        symbol: str,
+        timestamp: datetime,
+        open_price: float,
+        high: float,
+        low: float,
+        close: float,
+        volume: float,
     ) -> Optional[PriceBar]:
         """Сохранить ценовой бар."""
         try:
@@ -34,7 +34,7 @@ class CRUDOperations:
                 high=high,
                 low=low,
                 close=close,
-                volume=volume
+                volume=volume,
             )
             session.add(price_bar)
             await session.flush()
@@ -45,12 +45,12 @@ class CRUDOperations:
 
     @staticmethod
     async def save_regression_result(
-            session: AsyncSession,
-            timestamp: datetime,
-            alpha: Optional[float],
-            beta: Optional[float],
-            epsilon: Optional[float],
-            own_price_index: Optional[float]
+        session: AsyncSession,
+        timestamp: datetime,
+        alpha: Optional[float],
+        beta: Optional[float],
+        epsilon: Optional[float],
+        own_price_index: Optional[float],
     ) -> Optional[RegressionResult]:
         """Сохранить результат регрессии."""
         try:
@@ -59,7 +59,7 @@ class CRUDOperations:
                 alpha=alpha,
                 beta=beta,
                 epsilon=epsilon,
-                own_price_index=own_price_index
+                own_price_index=own_price_index,
             )
             session.add(result)
             await session.flush()
@@ -70,17 +70,15 @@ class CRUDOperations:
 
     @staticmethod
     async def save_alert(
-            session: AsyncSession,
-            timestamp: datetime,
-            message: str,
-            change_percent: Optional[float] = None
+        session: AsyncSession,
+        timestamp: datetime,
+        message: str,
+        change_percent: Optional[float] = None,
     ) -> Optional[Alert]:
         """Сохранить оповещение."""
         try:
             alert = Alert(
-                timestamp=timestamp,
-                message=message,
-                change_percent=change_percent
+                timestamp=timestamp, message=message, change_percent=change_percent
             )
             session.add(alert)
             await session.flush()
@@ -91,9 +89,7 @@ class CRUDOperations:
 
     @staticmethod
     async def get_recent_bars(
-            session: AsyncSession,
-            symbol: str,
-            limit: int = 100
+        session: AsyncSession, symbol: str, limit: int = 100
     ) -> List[PriceBar]:
         """Получить последние ценовые бары."""
         try:
@@ -111,8 +107,7 @@ class CRUDOperations:
 
     @staticmethod
     async def cleanup_old_data(
-            session: AsyncSession,
-            days_to_keep: int = 7
+        session: AsyncSession, days_to_keep: int = 7
     ) -> Tuple[int, int, int]:
         """Очистить старые данные."""
         try:
@@ -125,7 +120,9 @@ class CRUDOperations:
             bars_deleted = result_bars.rowcount
 
             # Удаляем старые результаты регрессии
-            stmt_results = delete(RegressionResult).where(RegressionResult.timestamp < cutoff_date)
+            stmt_results = delete(RegressionResult).where(
+                RegressionResult.timestamp < cutoff_date
+            )
             result_results = await session.execute(stmt_results)
             results_deleted = result_results.rowcount
 
@@ -136,7 +133,9 @@ class CRUDOperations:
 
             await session.commit()
 
-            logger.info(f"Cleaned up {bars_deleted} bars, {results_deleted} results, {alerts_deleted} alerts")
+            logger.info(
+                f"Cleaned up {bars_deleted} bars, {results_deleted} results, {alerts_deleted} alerts"
+            )
             return bars_deleted, results_deleted, alerts_deleted
 
         except SQLAlchemyError as e:

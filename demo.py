@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import random
 
 # Добавляем путь к проекту
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 
 from src.models.regression import RollingRegression
 from src.models.own_price_tracker import OwnPriceTracker
@@ -22,7 +22,9 @@ class DemoDataGenerator:
         self.timestamp = datetime.now()
         self.minute_counter = 0
         self.alert_triggered = False
-        self.trigger_alert_at = random.randint(10, 20)  # Случайная минута для оповещения
+        self.trigger_alert_at = random.randint(
+            10, 20
+        )  # Случайная минута для оповещения
 
     def generate_data(self):
         """Сгенерировать новые данные."""
@@ -36,22 +38,24 @@ class DemoDataGenerator:
         if not self.alert_triggered and self.minute_counter >= self.trigger_alert_at:
             # Создаем значительное положительное собственное движение ETH (2%)
             eth_change = btc_change * 1.5 + 0.02  # Добавляем 2% собственного движения
-            print(f"\n⚠️ Генерирую значительное собственное движение ETH для демонстрации оповещения!")
+            print(
+                f"\n⚠️ Генерирую значительное собственное движение ETH для демонстрации оповещения!"
+            )
         else:
             # Обычная корреляция с небольшим шумом
             eth_change = btc_change * 1.5 + random.uniform(-0.001, 0.001)
 
-        self.btc_price *= (1 + btc_change)
-        self.eth_price *= (1 + eth_change)
+        self.btc_price *= 1 + btc_change
+        self.eth_price *= 1 + eth_change
         self.timestamp += timedelta(minutes=1)
 
         return {
-            'eth_price': self.eth_price,
-            'btc_price': self.btc_price,
-            'timestamp': self.timestamp,
-            'eth_return': eth_change,
-            'btc_return': btc_change,
-            'minute': self.minute_counter
+            "eth_price": self.eth_price,
+            "btc_price": self.btc_price,
+            "timestamp": self.timestamp,
+            "eth_return": eth_change,
+            "btc_return": btc_change,
+            "minute": self.minute_counter,
         }
 
 
@@ -64,7 +68,7 @@ async def demo_mode():
     # Настраиваем логирование
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Инициализируем компоненты с меньшим окном для быстрой демонстрации
@@ -92,14 +96,12 @@ async def demo_mode():
 
             # Обновляем регрессию
             result = regression.update(
-                data['timestamp'],
-                data['eth_return'],
-                data['btc_return']
+                data["timestamp"], data["eth_return"], data["btc_return"]
             )
 
             if result:
                 # Обновляем трекер
-                current_index = tracker.update(data['timestamp'], result.epsilon)
+                current_index = tracker.update(data["timestamp"], result.epsilon)
 
                 # Проверяем оповещения (для демо используем 5 минут и порог 0.5%)
                 change_percent = tracker.get_index_change(minutes=5)
@@ -116,22 +118,29 @@ async def demo_mode():
                         # Помечаем, что оповещение сработало
                         if not generator.alert_triggered:
                             generator.alert_triggered = True
-                            print(f"\n🎯 ИЗМЕНЕНИЕ НА {abs(change_percent):.2f}%! ДОЛЖНО СРАБОТАТЬ ОПОВЕЩЕНИЕ!")
+                            print(
+                                f"\n🎯 ИЗМЕНЕНИЕ НА {abs(change_percent):.2f}%! ДОЛЖНО СРАБОТАТЬ ОПОВЕЩЕНИЕ!"
+                            )
 
                         # Отправляем оповещение
                         alert_manager.send_price_change_alert(
                             change_percent,
                             current_index,
-                            is_positive=change_percent > 0
+                            is_positive=change_percent > 0,
                         )
                 else:
                     print(f"  Ожидание данных... (нужно 5 минут истории)")
 
             else:
-                print(f"  Сбор данных для регрессии... ({regression.get_window_size()}/{regression.min_window})")
+                print(
+                    f"  Сбор данных для регрессии... ({regression.get_window_size()}/{regression.min_window})"
+                )
 
             # Если оповещение сработало, немного замедлим демо для наглядности
-            if generator.alert_triggered and data['minute'] == generator.trigger_alert_at:
+            if (
+                generator.alert_triggered
+                and data["minute"] == generator.trigger_alert_at
+            ):
                 print("\n" + "=" * 70)
                 print("✅ ОПОВЕЩЕНИЕ УСПЕШНО СРАБОТАЛО!")
                 print("✅ Система корректно отслеживает собственные движения ETH")
@@ -151,7 +160,9 @@ async def demo_mode():
 
     if generator.alert_triggered:
         print("✅ Тест пройден: оповещение успешно сработало")
-        print("✅ Система корректно отслеживает значительные изменения собственной цены ETH")
+        print(
+            "✅ Система корректно отслеживает значительные изменения собственной цены ETH"
+        )
         print("✅ При изменении индекса на 0.5%+ за 5 минут выводится оповещение")
     else:
         print("⚠️ Оповещение не сработало")

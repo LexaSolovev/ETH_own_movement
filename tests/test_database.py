@@ -11,7 +11,7 @@ async def test_database_connection():
     """Тест подключения к базе данных."""
     db = Database()
 
-    with patch('src.db.database.create_async_engine') as mock_engine:
+    with patch("src.db.database.create_async_engine") as mock_engine:
         mock_conn = AsyncMock()
         mock_engine.return_value.begin.return_value.__aenter__.return_value = mock_conn
 

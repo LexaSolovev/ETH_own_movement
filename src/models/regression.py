@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RegressionStats:
     """Статистика регрессии."""
+
     alpha: Optional[float]
     beta: Optional[float]
     epsilon: Optional[float]
@@ -44,9 +45,13 @@ class RollingRegression:
         self.beta: Optional[float] = None
         self.last_epsilon: Optional[float] = None
 
-        logger.info(f"Initialized RollingRegression with window size: {self.window_size}")
+        logger.info(
+            f"Initialized RollingRegression with window size: {self.window_size}"
+        )
 
-    def update(self, timestamp, eth_return: float, btc_return: float) -> Optional[RegressionStats]:
+    def update(
+        self, timestamp, eth_return: float, btc_return: float
+    ) -> Optional[RegressionStats]:
         """
         Обновить регрессию новыми доходностями.
 
@@ -65,7 +70,9 @@ class RollingRegression:
 
         # Проверяем, достаточно ли данных для регрессии
         if len(self.eth_returns) < self.min_window:
-            logger.debug(f"Not enough data for regression: {len(self.eth_returns)}/{self.min_window}")
+            logger.debug(
+                f"Not enough data for regression: {len(self.eth_returns)}/{self.min_window}"
+            )
             return None
 
         try:
@@ -98,11 +105,13 @@ class RollingRegression:
                 alpha=self.alpha,
                 beta=self.beta,
                 epsilon=self.last_epsilon,
-                r_squared=float(r_squared)
+                r_squared=float(r_squared),
             )
 
-            logger.debug(f"Regression updated: alpha={self.alpha:.6f}, beta={self.beta:.6f}, "
-                         f"epsilon={self.last_epsilon:.6f}, R²={r_squared:.4f}")
+            logger.debug(
+                f"Regression updated: alpha={self.alpha:.6f}, beta={self.beta:.6f}, "
+                f"epsilon={self.last_epsilon:.6f}, R²={r_squared:.4f}"
+            )
 
             return result
 

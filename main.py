@@ -20,11 +20,11 @@ os.makedirs(os.path.dirname(settings.LOG_FILE), exist_ok=True)
 # Настройка логирования
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(settings.LOG_FILE)
-    ]
+        logging.FileHandler(settings.LOG_FILE),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -37,13 +37,13 @@ class ETHOwnMovementApp:
         # Последние цены для расчета доходностей
         self.last_prices: Dict[str, Optional[float]] = {
             settings.ETH_SYMBOL: None,
-            settings.BTC_SYMBOL: None
+            settings.BTC_SYMBOL: None,
         }
 
         # Последние временные метки
         self.last_timestamps: Dict[str, Optional[datetime]] = {
             settings.ETH_SYMBOL: None,
-            settings.BTC_SYMBOL: None
+            settings.BTC_SYMBOL: None,
         }
 
         # Инициализация компонентов
@@ -55,7 +55,7 @@ class ETHOwnMovementApp:
         self.ws_client = BinanceWebSocket(
             on_klines_callback=self.on_klines,
             symbols=[settings.ETH_SYMBOL, settings.BTC_SYMBOL],
-            interval=settings.INTERVAL
+            interval=settings.INTERVAL,
         )
 
         # Флаг для остановки приложения
@@ -113,7 +113,9 @@ class ETHOwnMovementApp:
             except Exception as e:
                 logger.error(f"Error in periodic cleanup: {e}")
 
-    def calculate_return(self, current_price: float, last_price: float) -> Optional[float]:
+    def calculate_return(
+        self, current_price: float, last_price: float
+    ) -> Optional[float]:
         """
         Рассчитать логарифмическую доходность.
 
@@ -129,7 +131,9 @@ class ETHOwnMovementApp:
 
         try:
             # Логарифмическая доходность: ln(P_t / P_{t-1})
-            return (current_price / last_price) - 1  # Для малых значений ≈ ln(P_t/P_{t-1})
+            return (
+                current_price / last_price
+            ) - 1  # Для малых значений ≈ ln(P_t/P_{t-1})
         except Exception as e:
             logger.error(f"Error calculating return: {e}")
             return None
@@ -150,9 +154,9 @@ class ETHOwnMovementApp:
 
     async def _process_kline(self, kline_data: dict):
         """Обработать данные свечи."""
-        symbol = kline_data['symbol']
-        timestamp = kline_data['timestamp']
-        close_price = kline_data['close']
+        symbol = kline_data["symbol"]
+        timestamp = kline_data["timestamp"]
+        close_price = kline_data["close"]
 
         try:
             # Сохраняем бар в БД
@@ -161,11 +165,11 @@ class ETHOwnMovementApp:
                     session=session,
                     symbol=symbol,
                     timestamp=timestamp,
-                    open_price=kline_data['open'],
-                    high=kline_data['high'],
-                    low=kline_data['low'],
+                    open_price=kline_data["open"],
+                    high=kline_data["high"],
+                    low=kline_data["low"],
                     close=close_price,
-                    volume=kline_data['volume']
+                    volume=kline_data["volume"],
                 )
 
             # Рассчитываем доходность
@@ -193,7 +197,7 @@ class ETHOwnMovementApp:
             return
 
         # Получаем последнюю доходность BTC
-        if not hasattr(self, 'btc_return_cache'):
+        if not hasattr(self, "btc_return_cache"):
             return
 
         btc_timestamp, btc_return = self.btc_return_cache
@@ -201,16 +205,22 @@ class ETHOwnMovementApp:
         # Проверяем, что данные примерно одного времени
         time_diff = abs((timestamp - btc_timestamp).total_seconds())
         if time_diff > 60:  # Разница больше 60 секунд
-            logger.warning(f"Time mismatch between ETH and BTC data: {time_diff:.0f} seconds")
+            logger.warning(
+                f"Time mismatch between ETH and BTC data: {time_diff:.0f} seconds"
+            )
             return
 
         try:
             # Обновляем регрессию
-            regression_result = self.regression.update(timestamp, eth_return, btc_return)
+            regression_result = self.regression.update(
+                timestamp, eth_return, btc_return
+            )
 
             if regression_result and regression_result.epsilon is not None:
                 # Обновляем трекер собственной цены
-                current_index = self.price_tracker.update(timestamp, regression_result.epsilon)
+                current_index = self.price_tracker.update(
+                    timestamp, regression_result.epsilon
+                )
 
                 # Сохраняем результат регрессии в БД
                 async with database.get_session() as session:
@@ -220,13 +230,16 @@ class ETHOwnMovementApp:
                         alpha=regression_result.alpha,
                         beta=regression_result.beta,
                         epsilon=regression_result.epsilon,
-                        own_price_index=current_index
+                        own_price_index=current_index,
                     )
 
                 # Проверяем оповещения
                 if not self.regression.is_ready():
                     # Регрессия только что стала готовой
-                    if self.regression.get_window_size() == settings.MIN_WINDOW_FOR_REGRESSION:
+                    if (
+                        self.regression.get_window_size()
+                        == settings.MIN_WINDOW_FOR_REGRESSION
+                    ):
                         self.alert_manager.send_regression_ready_alert(
                             self.regression.get_window_size()
                         )

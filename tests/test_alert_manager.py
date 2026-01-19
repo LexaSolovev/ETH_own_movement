@@ -26,9 +26,7 @@ def test_price_change_alert():
 
     # Отправляем оповещение
     manager.send_price_change_alert(
-        change_percent=1.5,
-        current_index=101.5,
-        is_positive=True
+        change_percent=1.5, current_index=101.5, is_positive=True
     )
 
     assert len(alerts) == 1

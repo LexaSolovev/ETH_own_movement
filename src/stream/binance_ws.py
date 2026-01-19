@@ -14,10 +14,10 @@ class BinanceWebSocket:
     """WebSocket клиент для получения данных с Binance."""
 
     def __init__(
-            self,
-            on_klines_callback: Callable[[Dict], None],
-            symbols: Optional[list] = None,
-            interval: str = "1m"
+        self,
+        on_klines_callback: Callable[[Dict], None],
+        symbols: Optional[list] = None,
+        interval: str = "1m",
     ):
         """
         Инициализация WebSocket клиента.
@@ -48,11 +48,7 @@ class BinanceWebSocket:
     def _build_subscription_message(self) -> dict:
         """Построить сообщение для подписки на потоки."""
         streams = self._build_stream_names()
-        return {
-            "method": "SUBSCRIBE",
-            "params": streams,
-            "id": 1
-        }
+        return {"method": "SUBSCRIBE", "params": streams, "id": 1}
 
     async def connect(self):
         """Подключиться к WebSocket и подписаться на потоки."""
@@ -99,7 +95,7 @@ class BinanceWebSocket:
             data = json.loads(message)
 
             # Проверяем, является ли сообщение kline
-            if 'k' in data and data['k']['x']:  # x=True означает, что свеча закрыта
+            if "k" in data and data["k"]["x"]:  # x=True означает, что свеча закрыта
                 kline_data = self._parse_kline_data(data)
                 self.on_klines_callback(kline_data)
 
@@ -110,16 +106,16 @@ class BinanceWebSocket:
 
     def _parse_kline_data(self, data: dict) -> dict:
         """Распарсить данные kline."""
-        kline = data['k']
+        kline = data["k"]
         return {
-            'symbol': kline['s'].lower(),
-            'timestamp': datetime.fromtimestamp(kline['t'] / 1000),
-            'open': float(kline['o']),
-            'high': float(kline['h']),
-            'low': float(kline['l']),
-            'close': float(kline['c']),
-            'volume': float(kline['v']),
-            'is_closed': kline['x']
+            "symbol": kline["s"].lower(),
+            "timestamp": datetime.fromtimestamp(kline["t"] / 1000),
+            "open": float(kline["o"]),
+            "high": float(kline["h"]),
+            "low": float(kline["l"]),
+            "close": float(kline["c"]),
+            "volume": float(kline["v"]),
+            "is_closed": kline["x"],
         }
 
     async def run_with_reconnect(self):
@@ -133,7 +129,9 @@ class BinanceWebSocket:
                 if self.reconnect_attempts < self.max_reconnect_attempts:
                     self.reconnect_attempts += 1
                     delay = self.reconnect_delay * self.reconnect_attempts
-                    logger.warning(f"Reconnecting in {delay} seconds... (attempt {self.reconnect_attempts})")
+                    logger.warning(
+                        f"Reconnecting in {delay} seconds... (attempt {self.reconnect_attempts})"
+                    )
                     await asyncio.sleep(delay)
                 else:
                     logger.error("Max reconnection attempts reached")

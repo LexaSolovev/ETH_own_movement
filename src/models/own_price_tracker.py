@@ -49,7 +49,9 @@ class OwnPriceTracker:
         self.index_history.append((timestamp, self.current_index))
         self.last_update_time = timestamp
 
-        logger.debug(f"Own price index updated: {self.current_index:.4f} at {timestamp}")
+        logger.debug(
+            f"Own price index updated: {self.current_index:.4f} at {timestamp}"
+        )
         return self.current_index
 
     def get_index_change(self, minutes: int = 60) -> Optional[float]:
