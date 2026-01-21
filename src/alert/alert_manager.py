@@ -4,13 +4,14 @@ from typing import Optional, Callable
 from enum import Enum
 
 from config.settings import settings
+from src.db.crud import crud
+from src.db.database import database
 
 logger = logging.getLogger(__name__)
 
 
 class AlertType(Enum):
     """Типы оповещений."""
-
     PRICE_CHANGE = "price_change"
     REGRESSION_READY = "regression_ready"
     ERROR = "error"
@@ -20,9 +21,9 @@ class AlertManager:
     """Менеджер оповещений."""
 
     def __init__(
-        self,
-        alert_callback: Optional[Callable[[str], None]] = None,
-        cooldown_minutes: int = None,
+            self,
+            alert_callback: Optional[Callable[[str], None]] = None,
+            cooldown_minutes: int = None
     ):
         """
         Инициализация менеджера оповещений.
@@ -40,9 +41,21 @@ class AlertManager:
         # Порог для оповещений
         self.alert_threshold = settings.ALERT_THRESHOLD * 100  # В процентах
 
-        logger.info(
-            f"Initialized AlertManager with cooldown: {self.cooldown_minutes} minutes"
-        )
+        logger.info(f"Initialized AlertManager with cooldown: {self.cooldown_minutes} minutes")
+
+    async def _save_alert_to_db(self, message: str, change_percent: Optional[float] = None):
+        """Сохранить оповещение в базу данных."""
+        try:
+            async with database.get_session() as session:
+                await crud.save_alert(
+                    session=session,
+                    timestamp=datetime.now(),
+                    message=message,
+                    change_percent=change_percent
+                )
+                logger.debug(f"Alert saved to database: {message[:50]}...")
+        except Exception as e:
+            logger.error(f"Failed to save alert to database: {e}")
 
     def _default_alert_callback(self, message: str):
         """Стандартный callback для оповещений (вывод в консоль)."""
@@ -66,7 +79,10 @@ class AlertManager:
         self.last_alert_times[alert_type] = datetime.now()
 
     def send_price_change_alert(
-        self, change_percent: float, current_index: float, is_positive: bool
+            self,
+            change_percent: float,
+            current_index: float,
+            is_positive: bool
     ):
         """
         Отправить оповещение об изменении цены.
@@ -91,6 +107,9 @@ class AlertManager:
         self.alert_callback(message)
         self._update_alert_time(AlertType.PRICE_CHANGE)
 
+        # Сохраняем в базу данных асинхронно
+        asyncio.create_task(self._save_alert_to_db(message, change_percent))
+
         logger.info(f"Price change alert sent: {abs(change_percent):.2f}% {direction}")
 
     def send_regression_ready_alert(self, window_size: int):
@@ -107,6 +126,9 @@ class AlertManager:
         self.alert_callback(message)
         self._update_alert_time(AlertType.REGRESSION_READY)
 
+        # Сохраняем в базу данных асинхронно
+        asyncio.create_task(self._save_alert_to_db(message))
+
         logger.info(f"Regression ready alert sent: {window_size} minutes of data")
 
     def send_error_alert(self, error_message: str, component: str = "Unknown"):
@@ -114,14 +136,24 @@ class AlertManager:
         if not self._can_send_alert(AlertType.ERROR):
             return
 
-        message = f"Ошибка в компоненте {component}:\n" f"{error_message}"
+        message = (
+            f"Ошибка в компоненте {component}:\n"
+            f"{error_message}"
+        )
 
         self.alert_callback(message)
         self._update_alert_time(AlertType.ERROR)
 
+        # Сохраняем в базу данных асинхронно
+        asyncio.create_task(self._save_alert_to_db(message))
+
         logger.error(f"Error alert sent from {component}: {error_message}")
 
-    def check_price_change(self, change_percent: Optional[float], current_index: float):
+    def check_price_change(
+            self,
+            change_percent: Optional[float],
+            current_index: float
+    ):
         """
         Проверить изменение цены и отправить оповещение при необходимости.
 
